@@ -1,0 +1,111 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="https://cdn.jsdelivr.net/npm/web3@latest/dist/web3.min.js"></script>
+    <script src="https://unpkg.com/moralis/dist/moralis.js"></script>
+</head>
+<body>
+    
+    <h1>IPFS submit</h1>
+    <button id="loginB" onclick=login()>Login</button>
+    <input type="text" name="fileName" id="fileName" placeholder="name"><br><br>
+    <textarea name="fileDescription" id="fileDescription" cols="30" rows="10"></textarea>
+    <input type="file" name="fileInput" id="fileInput"><br><br>
+    <button onclick=clickUploadFile()>Upload File</button>
+
+    
+    <table id="tableData" border="1" cellpadding="2">
+        <tr>
+            <td><b>name of document holder</b></td>
+            <td><b>Status</b></td>
+            <td><b>File Hash</b></td>
+            <td><b>File Link</b></td>
+
+        </tr>
+    </table>
+    
+    <script>
+
+        var nameHolder; 
+        var myHash = " placeholder";
+        var myHash2 = "placeholder";
+        var myStatus;
+        var myLink;
+
+        //connect moralis server to page
+        const serverUrl = 'https://lncl2btzgjz9.usemoralis.com:2053/server' ;
+        const appId = '2j6flm4iOTW4fOPl7uHs94UtYqkMU5duRG9TPAWA';
+        //initiate moralis server in respects to the URL and appID
+        Moralis.start({ serverUrl, appId });
+        //Starts metamask
+        Moralis.authenticate().then(function (user) {
+        console.log(user.get('Login successful'))
+        })
+        //metamask ends
+
+    //upload a file
+    uploadFile = async () => {
+        const data = fileInput.files[0]
+        const file = new Moralis.File(data.name, data)
+        await file.saveIPFS();
+        console.log(file.ipfs(), file.hash())
+        //stores hash value
+        myHash = file.hash();
+        //holds the link to file
+        myHash2 = file.ipfs()
+        myStatus = "&#10004;";
+        //creates new tab for donwloadable file
+        myLink = "<a href='" + myHash2 + "'target= ' _blank'>" + "Click To View" + "</a>";
+        return file.ipfs();
+    }
+
+    uploadData = async (fileURL) => {
+        const dataName = document.getElementById('fileName').value;
+        const dataDescription = document.getElementById('fileDescription').value;
+        //var makes public
+        nameHolder = dataName;
+        const dataInfo = {
+            "name": dataName,
+            "description":dataDescription,
+            "image":fileURL
+        }
+
+        const file = new Moralis.File("file.json", {base64 : btoa(JSON.stringify(dataInfo))});
+        await file.saveIPFS();
+        console.log(file.ipfs());
+    }
+
+    clickUploadFile = async () => {
+        
+        
+        
+        if(confirm("are you sure you wish to verify?")){
+            const file = await uploadFile();
+            await  uploadData(file)
+        } else {
+            myHash = " File Not Verified. "
+            myStatus = " X "
+            myLink = " Not Verified"
+        }
+    
+    var table = document.getElementById("tableData");
+    //takes length of table
+    var rowCounter = table.rows.length
+    //creates a blank row to create space in the table
+    var row =  table.insertRow(rowCounter);
+
+    row.insertCell(0).innerHTML = nameHolder;
+    row.insertCell(1).innerHTML = myStatus;
+    row.insertCell(2).innerHTML = myHash;
+    row.insertCell(3).innerHTML = myLink;
+
+
+    }
+    </script>
+
+
+</body>
+</html>
